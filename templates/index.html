@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroTech Auto Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --neon-text-color: #f40;
+            --neon-border-color: #08f;
+            --health-color: #0f0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'VT323', monospace;
+            background-color: #000;
+            color: var(--health-color);
+            min-height: 100vh;
+            overflow-y: auto;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, 
+                rgba(32, 255, 77, .05) 25%, 
+                rgba(32, 255, 77, .05) 26%, transparent 27%, transparent 74%,
+                rgba(32, 255, 77, .05) 75%, 
+                rgba(32, 255, 77, .05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, 
+                rgba(32, 255, 77, .05) 25%, 
+                rgba(32, 255, 77, .05) 26%, transparent 27%, transparent 74%,
+                rgba(32, 255, 77, .05) 75%, 
+                rgba(32, 255, 77, .05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            background-attachment: fixed;
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--neon-text-color);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: var(--neon-text-color);
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 1.2em;
+            color: var(--neon-text-color);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, minmax(250px, 1fr));
+            gap: 1rem;
+            padding: 0 1rem;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--neon-border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 0 10px var(--neon-border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            animation: glow 1.5s ease-in-out infinite alternate;
+            min-height: 250px;
+        }
+
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .panel::-webkit-scrollbar-thumb {
+            background: var(--health-color);
+            border-radius: 4px;
+            box-shadow: 0 0 5px var(--health-color);
+        }
+
+        .panel h2 {
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+            color: var(--neon-text-color);
+            border-bottom: 2px solid var(--neon-border-color);
+            padding-bottom: 0.5rem;
+            text-shadow: 0 0 5px var(--neon-text-color);
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(0, 255, 0, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: var(--health-color);
+            text-shadow: 0 0 5px var(--health-color);
+        }
+
+        .chart {
+            flex: 1;
+            min-height: 200px;
+            width: 100%;
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid var(--health-color);
+            margin-top: auto;
+        }
+
+        .config-form {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .config-form input,
+        .config-form select {
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--health-color);
+            border-radius: 4px;
+            font-size: 1.1rem;
+            color: var(--health-color);
+            font-family: 'VT323', monospace;
+        }
+
+        .config-form button {
+            padding: 0.5rem;
+            background: var(--health-color);
+            color: black;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .config-form button:hover {
+            background: #00ff00;
+            box-shadow: 0 0 10px var(--health-color);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            box-shadow: 0 0 5px currentColor;
+        }
+
+        .status-connected {
+            background-color: var(--health-color);
+            color: var(--health-color);
+        }
+
+        .status-disconnected {
+            background-color: var(--neon-text-color);
+            color: var(--neon-text-color);
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px var(--neon-border-color),
+                           0 0 10px var(--neon-border-color),
+                           0 0 15px var(--neon-border-color);
+            }
+            to {
+                box-shadow: 0 0 10px var(--neon-border-color),
+                           0 0 20px var(--neon-border-color),
+                           0 0 30px var(--neon-border-color);
+            }
+        }
+
+        .scanline {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(255, 255, 255, 0.2) 10%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            position: fixed;
+            animation: scanline 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100vh);
+            }
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(5, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(9, minmax(250px, auto));
+            }
+            
+            .panel {
+                min-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="container">
+        <div class="header">
+            <h1>RetroTech Auto Analytics</h1>
+            <p>Advanced Vehicle Diagnostics & Predictions</p>
+        </div>
+
+        <div class="system-status">
+            <div>
+                <span class="status-indicator" id="obdStatus"></span>
+                <span id="obdStatusText">OBD-II Connection</span>
+            </div>
+            <div>
+                <span class="status-indicator" id="mlStatus"></span>
+                <span id="mlStatusText">ML Models</span>
+            </div>
+            <div id="lastUpdate">Last Update: --</div>
+        </div>
+
+        <div class="dashboard">
+            <!-- Row 1 -->
+            <div class="panel">
+                <h2>Vehicle Configuration</h2>
+                <form class="config-form" id="vehicleConfigForm">
+                    <input type="text" id="make" placeholder="Make" required>
+                    <input type="text" id="model" placeholder="Model" required>
+                    <input type="number" id="year" placeholder="Year" required min="1990" max="2024">
+                    <select id="engineType">
+                        <option value="gasoline">Gasoline</option>
+                        <option value="diesel">Diesel</option>
+                        <option value="hybrid">Hybrid</option>
+                    </select>
+                    <select id="transmission">
+                        <option value="automatic">Automatic</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                    <button type="submit">Update Configuration</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h2>Engine Status</h2>
+                <div class="metric">
+                    <span>Temperature</span>
+                    <span class="metric-value" id="engineTemp">--</span>
+                </div>
+                <div class="metric">
+                    <span>RPM</span>
+                    <span class="metric-value" id="rpm">--</span>
+                </div>
+                <div class="metric">
+                    <span>Oil Level</span>
+                    <span class="metric-value" id="oilLevel">--</span>
+                </div>
+                <div class="metric">
+                    <span>Coolant</span>
+                    <span class="metric-value" id="coolantLevel">--</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Performance Metrics</h2>
+                <div class="metric">
+                    <span>Speed</span>
+                    <span class="metric-value" id="speed">--</span>
+                </div>
+                <div class="metric">
+                    <span>Fuel Level</span>
+                    <span class="metric-value" id="fuelLevel">--</span>
+                </div>
+                <div class="metric">
+                    <span>Range</span>
+                    <span class="metric-value" id="range">--</span>
+                </div>
+                <div class="metric">
+                    <span>Efficiency</span>
+                    <span class="metric-value" id="efficiency">--</span>
+                </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="panel">
+                <h2>Performance Analytics</h2>
+                <div class="metric">
+                    <span>Performance Score</span>
+                    <span class="metric-value" id="performanceScore">--</span>
+                </div>
+                <div class="metric">
+                    <span>Efficiency Score</span>
+                    <span class="metric-value" id="efficiencyScore">--</span>
+                </div>
+                <div class="metric">
+                    <span>Health Score</span>
+                    <span class="metric-value" id="healthScore">--</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Driving Pattern</h2>
+                <div class="metric">
+                    <span>Current Pattern</span>
+                    <span class="metric-value" id="drivingPattern">--</span>
+                </div>
+                <div class="metric">
+                    <span>Avg. Speed</span>
+                    <span class="metric-value" id="avgSpeed">--</span>
+                </div>
+                <div class="metric">
+                    <span>Trip Duration</span>
+                    <span class="metric-value" id="tripDuration">--</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>System Status</h2>
+                <div class="metric">
+                    <span>OBD Connection</span>
+                    <span><span class="status-indicator" id="obdStatusIndicator"></span><span id="obdConnectionStatus">--</span></span>
+                </div>
+                <div class="metric">
+                    <span>Data Collection</span>
+                    <span><span class="status-indicator" id="dataStatusIndicator"></span><span id="dataCollectionStatus">--</span></span>
+                </div>
+                <div class="metric">
+                    <span>Last Update</span>
+                    <span class="metric-value" id="lastUpdateTime">--</span>
+                </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="panel">
+                <h2>Performance History</h2>
+                <div id="performanceChart" class="chart"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Driving Patterns</h2>
+                <div id="patternsChart" class="chart"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Maintenance Status</h2>
+                <div class="metric">
+                    <span>Next Service</span>
+                    <span class="metric-value" id="nextService">--</span>
+                </div>
+                <div class="metric">
+                    <span>Oil Life</span>
+                    <span class="metric-value" id="oilLife">--</span>
+                </div>
+                <div class="metric">
+                    <span>Brake Wear</span>
+                    <span class="metric-value" id="brakeWear">--</span>
+                </div>
+                <div class="metric">
+                    <span>Battery Health</span>
+                    <span class="metric-value" id="batteryHealth">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateGaugeChart(elementId, chartData) {
+            try {
+                if (!chartData || !chartData.data || !chartData.layout) {
+                    throw new Error('Invalid chart data');
+                }
+                const container = document.getElementById(elementId);
+                if (!container) {
+                    throw new Error(`Chart container ${elementId} not found`);
+                }
+                Plotly.newPlot(elementId, chartData.data, chartData.layout);
+            } catch (error) {
+                console.error(`Error updating chart ${elementId}:`, error);
+                handleError(document.getElementById(elementId), error);
+            }
+        }
+
+        function updateSystemStatus() {
+            fetch('/api/system-status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update OBD status
+                    const obdStatus = document.getElementById('obdStatusIndicator');
+                    const obdText = document.getElementById('obdConnectionStatus');
+                    if (obdStatus && obdText) {
+                        obdStatus.className = `status-indicator ${data.obd_connected ? 'status-connected' : 'status-disconnected'}`;
+                        obdText.textContent = data.obd_connected ? 'Connected' : 'Disconnected';
+                    }
+
+                    // Update ML status
+                    const mlStatus = document.getElementById('mlStatus');
+                    const mlText = document.getElementById('mlStatusText');
+                    if (mlStatus && mlText) {
+                        mlStatus.className = `status-indicator ${data.ml_models_ready ? 'status-connected' : 'status-disconnected'}`;
+                        mlText.textContent = data.ml_models_ready ? 'Models Ready' : 'Models Not Ready';
+                    }
+
+                    // Update last update time
+                    const lastUpdate = document.getElementById('lastUpdateTime');
+                    if (lastUpdate) {
+                        lastUpdate.textContent = new Date(data.last_update).toLocaleTimeString();
+                    }
+
+                    // Update data collection status
+                    const dataStatus = document.getElementById('dataStatusIndicator');
+                    const dataText = document.getElementById('dataCollectionStatus');
+                    if (dataStatus && dataText) {
+                        const isCollecting = data.obd_connected || data.ml_models_ready;
+                        dataStatus.className = `status-indicator ${isCollecting ? 'status-connected' : 'status-disconnected'}`;
+                        dataText.textContent = isCollecting ? 'Active' : 'Inactive';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating system status:', error);
+                    ['obdConnectionStatus', 'dataCollectionStatus', 'mlStatusText'].forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element) element.textContent = 'Error';
+                    });
+                });
+        }
+
+        function handleError(element, error) {
+            if (!element) return;
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `Error: ${error.message || error}`;
+            element.innerHTML = '';
+            element.appendChild(errorDiv);
+        }
+
+        function updateMetrics() {
+            // Update vehicle stats
+            fetch('/api/vehicle-stats')
+                .then(response => response.json())
+                .then(result => {
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to fetch vehicle stats');
+                    }
+                    const data = result.data;
+                    
+                    // Update metrics only if elements exist
+                    const elements = {
+                        'engineTemp': `${data.engine_temp.toFixed(1)} °C`,
+                        'rpm': `${data.rpm.toFixed(0)} RPM`,
+                        'speed': `${data.speed.toFixed(1)} km/h`,
+                        'fuelLevel': `${data.fuel_level.toFixed(1)}%`,
+                        'oilLevel': `${data.oil_level.toFixed(1)}%`,
+                        'coolantLevel': `${data.coolant_level.toFixed(1)}%`
+                    };
+                    
+                    Object.entries(elements).forEach(([id, value]) => {
+                        const element = document.getElementById(id);
+                        if (element) element.textContent = value;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error updating vehicle stats:', error);
+                    handleError(document.querySelector('.panel:nth-child(2)'), error);
+                });
+
+            // Update performance analytics
+            fetch('/api/driving-analytics')
+                .then(response => response.json())
+                .then(result => {
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to fetch driving analytics');
+                    }
+                    const data = result.data;
+                    
+                    // Update analytics only if elements exist
+                    const elements = {
+                        'performanceScore': `${data.performance_score.toFixed(1)}%`,
+                        'efficiencyScore': `${data.efficiency_score.toFixed(1)}%`,
+                        'healthScore': `${data.health_score.toFixed(1)}%`,
+                        'drivingPattern': data.current_pattern,
+                        'avgSpeed': `${data.average_speed.toFixed(1)} km/h`,
+                        'tripDuration': `${data.trip_duration.toFixed(1)} minutes`
+                    };
+                    
+                    Object.entries(elements).forEach(([id, value]) => {
+                        const element = document.getElementById(id);
+                        if (element) element.textContent = value;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error updating performance analytics:', error);
+                    handleError(document.querySelector('.panel:nth-child(3)'), error);
+                });
+
+            // Update performance history chart
+            fetch('/api/charts/performance-history')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || data.error) {
+                        throw new Error(data.error || 'Invalid performance history data');
+                    }
+                    const container = document.getElementById('performanceChart');
+                    if (container) {
+                        Plotly.newPlot('performanceChart', data.data, data.layout);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating performance chart:', error);
+                    handleError(document.getElementById('performanceChart'), error);
+                });
+
+            // Update driving patterns chart
+            fetch('/api/charts/driving-patterns')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || data.error) {
+                        throw new Error(data.error || 'Invalid driving patterns data');
+                    }
+                    const container = document.getElementById('patternsChart');
+                    if (container) {
+                        Plotly.newPlot('patternsChart', data.data, data.layout);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating patterns chart:', error);
+                    handleError(document.getElementById('patternsChart'), error);
+                });
+
+            // Update system status
+            updateSystemStatus();
+        }
+
+        // Update metrics every 5 seconds
+        setInterval(updateMetrics, 5000);
+        updateMetrics(); // Initial update
+
+        // Handle vehicle configuration form submission
+        const configForm = document.getElementById('vehicleConfigForm');
+        if (configForm) {
+            configForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const config = {
+                    make: document.getElementById('make').value,
+                    model: document.getElementById('model').value,
+                    year: parseInt(document.getElementById('year').value),
+                    engine_type: document.getElementById('engineType').value,
+                    transmission: document.getElementById('transmission').value
+                };
+                
+                fetch('/api/set-vehicle-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Vehicle configuration updated successfully');
+                        // Refresh metrics immediately after successful update
+                        updateMetrics();
+                    } else {
+                        throw new Error(data.error || 'Failed to update configuration');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating vehicle configuration: ' + error.message);
+                });
+            });
+        }
+    </script>
+</body>
+</html> 
