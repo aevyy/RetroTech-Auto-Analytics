@@ -8,240 +8,272 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
-            --neon-text-color: #ff2d95;
-            --neon-border-color: #08f;
-            --health-color: #0f0;
+            --terminal-green: #33ff33;
+            --terminal-bg: #001100;
+            --terminal-font: 'VT323', monospace;
+            --terminal-dim: #1a661a;
         }
 
         body {
             margin: 0;
-            padding: 0;
-            font-family: 'VT323', monospace;
-            background-color: #000;
-            color: var(--health-color);
+            padding: 20px;
+            font-family: var(--terminal-font);
+            background-color: var(--terminal-bg);
+            color: var(--terminal-green);
             min-height: 100vh;
-            overflow-y: auto;
-            background-image: 
-                linear-gradient(0deg, transparent 24%, 
-                rgba(32, 255, 77, .05) 25%, 
-                rgba(32, 255, 77, .05) 26%, transparent 27%, transparent 74%,
-                rgba(32, 255, 77, .05) 75%, 
-                rgba(32, 255, 77, .05) 76%, transparent 77%, transparent),
-                linear-gradient(90deg, transparent 24%, 
-                rgba(32, 255, 77, .05) 25%, 
-                rgba(32, 255, 77, .05) 26%, transparent 27%, transparent 74%,
-                rgba(32, 255, 77, .05) 75%, 
-                rgba(32, 255, 77, .05) 76%, transparent 77%, transparent);
-            background-size: 50px 50px;
-            background-attachment: fixed;
+            font-size: 18px;
+            line-height: 1.2;
+            text-shadow: 2px 2px 3px rgba(51, 255, 51, 0.2);
+            letter-spacing: 1px;
+        }
+
+        /* Old monitor curved effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                circle at center,
+                transparent 0%,
+                rgba(0, 0, 0, 0.1) 90%,
+                rgba(0, 0, 0, 0.3) 100%
+            );
+            pointer-events: none;
+            z-index: 2;
         }
 
         .container {
-            min-height: 100vh;
-            padding: 1rem;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
         }
 
         .header {
             text-align: center;
-            padding: 10px 0;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px var(--neon-text-color);
+            margin-bottom: 30px;
+            border-bottom: double 3px var(--terminal-green);
+            padding-bottom: 15px;
         }
 
         .header h1 {
-            margin: 0;
             font-size: 2.5em;
-            color: var(--neon-text-color);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .header p {
-            margin: 5px 0 0 0;
-            font-size: 1.2em;
-            color: var(--neon-text-color);
+            color: var(--terminal-dim);
+            margin-top: 5px;
         }
 
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, minmax(250px, 1fr));
-            gap: 1rem;
-            padding: 0 1rem;
-            box-sizing: border-box;
-            margin-bottom: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
         }
 
         .panel {
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid var(--neon-border-color);
-            border-radius: 10px;
-            padding: 1rem;
-            box-shadow: 0 0 10px var(--neon-border-color);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            animation: glow 1.5s ease-in-out infinite alternate;
-            min-height: 250px;
+            border: 1px solid var(--terminal-green);
+            padding: 15px;
+            background: var(--terminal-bg);
+            position: relative;
+            overflow: hidden;
         }
 
-        .panel::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .panel::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-
-        .panel::-webkit-scrollbar-thumb {
-            background: var(--health-color);
-            border-radius: 4px;
-            box-shadow: 0 0 5px var(--health-color);
+        .panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: var(--terminal-green);
+            opacity: 0.1;
         }
 
         .panel h2 {
-            margin: 0 0 1rem 0;
-            font-size: 1.2rem;
-            color: var(--neon-text-color);
-            border-bottom: 2px solid var(--neon-border-color);
-            padding-bottom: 0.5rem;
-            text-shadow: 0 0 5px var(--neon-text-color);
+            margin: 0 0 15px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--terminal-green);
+            font-size: 1.2em;
+            color: var(--terminal-green);
+        }
+
+        .panel h2::before {
+            content: ">";
+            margin-right: 10px;
+            color: var(--terminal-dim);
         }
 
         .metric {
+            font-family: var(--terminal-font);
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--terminal-dim);
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            padding: 0.5rem;
-            background: rgba(0, 255, 0, 0.05);
-            border-radius: 6px;
-            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        .metric::before {
+            content: "■";
+            margin-right: 10px;
+            color: var(--terminal-dim);
         }
 
         .metric-value {
-            font-weight: 600;
-            color: var(--health-color);
-            text-shadow: 0 0 5px var(--health-color);
-        }
-
-        .chart {
-            flex: 1;
-            min-height: 200px;
-            width: 100%;
-            background: rgba(0, 255, 0, 0.05);
-            border: 1px solid var(--health-color);
-            margin-top: auto;
-        }
-
-        .config-form {
-            display: grid;
-            gap: 0.75rem;
+            color: var(--terminal-green);
         }
 
         .config-form input,
         .config-form select {
-            padding: 0.5rem;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--health-color);
-            border-radius: 4px;
-            font-size: 1.1rem;
-            color: var(--health-color);
-            font-family: 'VT323', monospace;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            background: var(--terminal-bg);
+            border: 1px solid var(--terminal-green);
+            color: var(--terminal-green);
+            font-family: var(--terminal-font);
+            font-size: 16px;
         }
 
         .config-form button {
-            padding: 0.5rem;
-            background: var(--health-color);
-            color: black;
+            width: 100%;
+            padding: 8px;
+            background: var(--terminal-green);
+            color: var(--terminal-bg);
             border: none;
-            border-radius: 4px;
+            font-family: var(--terminal-font);
+            font-size: 16px;
             cursor: pointer;
-            font-weight: 600;
-            font-family: 'VT323', monospace;
-            font-size: 1.1rem;
             text-transform: uppercase;
-            transition: all 0.3s ease;
         }
 
         .config-form button:hover {
-            background: #00ff00;
-            box-shadow: 0 0 10px var(--health-color);
+            background: var(--terminal-dim);
+            color: var(--terminal-green);
         }
 
-        .status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-            box-shadow: 0 0 5px currentColor;
+        /* CRT screen effect */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1000;
+            animation: flicker 0.15s infinite;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(0, 0, 0, 0.25) 50%
+            ),
+            linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.06),
+                rgba(0, 255, 0, 0.02),
+                rgba(0, 0, 255, 0.06)
+            );
+            background-size: 100% 2px, 3px 100%;
+            opacity: 0.15;
         }
 
-        .status-connected {
-            background-color: var(--health-color);
-            color: var(--health-color);
-        }
-
-        .status-disconnected {
-            background-color: var(--neon-text-color);
-            color: var(--neon-text-color);
-        }
-
-        @keyframes glow {
-            from {
-                box-shadow: 0 0 5px var(--neon-border-color),
-                           0 0 10px var(--neon-border-color),
-                           0 0 15px var(--neon-border-color);
-            }
-            to {
-                box-shadow: 0 0 10px var(--neon-border-color),
-                           0 0 20px var(--neon-border-color),
-                           0 0 30px var(--neon-border-color);
-            }
-        }
-
+        /* Scanline effect */
         .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100px;
             background: linear-gradient(
                 0deg,
                 rgba(0, 0, 0, 0) 0%,
-                rgba(255, 255, 255, 0.2) 10%,
+                rgba(51, 255, 51, 0.2) 10%,
                 rgba(0, 0, 0, 0) 100%
             );
-            position: fixed;
-            animation: scanline 10s linear infinite;
+            animation: scanning 10s linear infinite;
             pointer-events: none;
+            z-index: 999;
         }
 
-        @keyframes scanline {
-            0% {
-                transform: translateY(-100vh);
-            }
-            100% {
-                transform: translateY(100vh);
-            }
+        @keyframes scanning {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
         }
 
-        @media (max-width: 1200px) {
-            .dashboard {
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: repeat(5, minmax(250px, 1fr));
-            }
+        @keyframes flicker {
+            0% { opacity: 0.27861; }
+            5% { opacity: 0.34769; }
+            10% { opacity: 0.23604; }
+            15% { opacity: 0.90626; }
+            20% { opacity: 0.18128; }
+            25% { opacity: 0.83891; }
+            30% { opacity: 0.65583; }
+            35% { opacity: 0.67807; }
+            40% { opacity: 0.26559; }
+            45% { opacity: 0.84693; }
+            50% { opacity: 0.96019; }
+            55% { opacity: 0.08594; }
+            60% { opacity: 0.20313; }
+            65% { opacity: 0.71988; }
+            70% { opacity: 0.53455; }
+            75% { opacity: 0.37288; }
+            80% { opacity: 0.71428; }
+            85% { opacity: 0.70419; }
+            90% { opacity: 0.7003; }
+            95% { opacity: 0.36108; }
+            100% { opacity: 0.24387; }
+        }
+
+        .system-status {
+            border: 1px solid var(--terminal-green);
+            margin-bottom: 20px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--terminal-font);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 8px;
+            background: var(--terminal-dim);
+        }
+
+        .status-connected {
+            background: var(--terminal-green);
+            box-shadow: 0 0 5px var(--terminal-green);
+        }
+
+        .chart {
+            border: 1px solid var(--terminal-dim);
+            padding: 10px;
+            margin-top: 15px;
+            background: rgba(0, 17, 0, 0.3);
         }
 
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: 1fr;
-                grid-template-rows: repeat(9, minmax(250px, auto));
             }
-            
-            .panel {
-                min-height: 250px;
-            }
+        }
+
+        /* Add CSS for disconnected state */
+        .metric-value.disconnected {
+            color: var(--terminal-dim);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
         }
     </style>
 </head>
@@ -408,6 +440,8 @@
         </div>
     </div>
 
+    <div class="crt-overlay"></div>
+
     <script>
         function updateGaugeChart(elementId, chartData) {
             try {
@@ -478,6 +512,33 @@
             element.appendChild(errorDiv);
         }
 
+        // Add retro messages for disconnected states
+        const OFFLINE_MESSAGES = {
+            engine: [
+                'AWAITING ENGINE LINK...',
+                'NO SIGNAL FROM ENGINE',
+                'CONNECT OBD-II TO VIEW',
+                'SCANNING FOR ENGINE DATA...'
+            ],
+            performance: [
+                'PERFORMANCE DATA OFFLINE',
+                'CONNECT VEHICLE TO VIEW',
+                'AWAITING SENSOR INPUT...',
+                'NO TELEMETRY DETECTED'
+            ],
+            system: [
+                'SYSTEM DISCONNECTED',
+                'ESTABLISH CONNECTION...',
+                'LINK REQUIRED',
+                'WAITING FOR INPUT...'
+            ]
+        };
+
+        function getRandomMessage(category) {
+            const messages = OFFLINE_MESSAGES[category] || ['NO DATA'];
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+
         function updateMetrics() {
             // Update vehicle stats
             fetch('/api/vehicle-stats')
@@ -486,26 +547,35 @@
                     if (!result.success) {
                         throw new Error(result.error || 'Failed to fetch vehicle stats');
                     }
-                    const data = result.data;
+                    const data = result.data || {};
                     
-                    // Update metrics only if elements exist
+                    // Update metrics only if elements exist and data is available
                     const elements = {
-                        'engineTemp': `${data.engine_temp.toFixed(1)} °C`,
-                        'rpm': `${data.rpm.toFixed(0)} RPM`,
-                        'speed': `${data.speed.toFixed(1)} km/h`,
-                        'fuelLevel': `${data.fuel_level.toFixed(1)}%`,
-                        'oilLevel': `${data.oil_level.toFixed(1)}%`,
-                        'coolantLevel': `${data.coolant_level.toFixed(1)}%`
+                        'engineTemp': data.engine_temp ? `${Number(data.engine_temp).toFixed(1)} °C` : getRandomMessage('engine'),
+                        'rpm': data.rpm ? `${Number(data.rpm).toFixed(0)} RPM` : '----',
+                        'speed': data.speed ? `${Number(data.speed).toFixed(1)} km/h` : '----',
+                        'fuelLevel': data.fuel_level ? `${Number(data.fuel_level).toFixed(1)}%` : '----',
+                        'oilLevel': data.oil_level ? `${Number(data.oil_level).toFixed(1)}%` : '----',
+                        'coolantLevel': data.coolant_level ? `${Number(data.coolant_level).toFixed(1)}%` : '----'
                     };
                     
                     Object.entries(elements).forEach(([id, value]) => {
                         const element = document.getElementById(id);
-                        if (element) element.textContent = value;
+                        if (element) {
+                            element.textContent = value;
+                            element.classList.toggle('disconnected', value === '----' || value.includes('...'));
+                        }
                     });
                 })
                 .catch(error => {
                     console.error('Error updating vehicle stats:', error);
-                    handleError(document.querySelector('.panel:nth-child(2)'), error);
+                    ['engineTemp', 'rpm', 'speed', 'fuelLevel', 'oilLevel', 'coolantLevel'].forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element) {
+                            element.textContent = getRandomMessage('engine');
+                            element.classList.add('disconnected');
+                        }
+                    });
                 });
 
             // Update performance analytics
@@ -515,26 +585,35 @@
                     if (!result.success) {
                         throw new Error(result.error || 'Failed to fetch driving analytics');
                     }
-                    const data = result.data;
+                    const data = result.data || {};
                     
-                    // Update analytics only if elements exist
+                    // Update analytics only if elements exist and data is available
                     const elements = {
-                        'performanceScore': `${data.performance_score.toFixed(1)}%`,
-                        'efficiencyScore': `${data.efficiency_score.toFixed(1)}%`,
-                        'healthScore': `${data.health_score.toFixed(1)}%`,
-                        'drivingPattern': data.current_pattern,
-                        'avgSpeed': `${data.average_speed.toFixed(1)} km/h`,
-                        'tripDuration': `${data.trip_duration.toFixed(1)} minutes`
+                        'performanceScore': data.performance_score ? `${Number(data.performance_score).toFixed(1)}%` : getRandomMessage('performance'),
+                        'efficiencyScore': data.efficiency_score ? `${Number(data.efficiency_score).toFixed(1)}%` : '----',
+                        'healthScore': data.health_score ? `${Number(data.health_score).toFixed(1)}%` : '----',
+                        'drivingPattern': data.current_pattern || 'NO PATTERN DETECTED',
+                        'avgSpeed': data.average_speed ? `${Number(data.average_speed).toFixed(1)} km/h` : '----',
+                        'tripDuration': data.trip_duration ? `${Number(data.trip_duration).toFixed(1)} minutes` : '----'
                     };
                     
                     Object.entries(elements).forEach(([id, value]) => {
                         const element = document.getElementById(id);
-                        if (element) element.textContent = value;
+                        if (element) {
+                            element.textContent = value;
+                            element.classList.toggle('disconnected', value === '----' || value.includes('...'));
+                        }
                     });
                 })
                 .catch(error => {
                     console.error('Error updating performance analytics:', error);
-                    handleError(document.querySelector('.panel:nth-child(3)'), error);
+                    ['performanceScore', 'efficiencyScore', 'healthScore', 'drivingPattern', 'avgSpeed', 'tripDuration'].forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element) {
+                            element.textContent = getRandomMessage('performance');
+                            element.classList.add('disconnected');
+                        }
+                    });
                 });
 
             // Update performance history chart
@@ -616,6 +695,47 @@
                 });
             });
         }
+
+        // Add terminal startup sequence
+        window.addEventListener('load', function() {
+            const terminal = document.createElement('div');
+            terminal.style.position = 'fixed';
+            terminal.style.top = '0';
+            terminal.style.left = '0';
+            terminal.style.width = '100%';
+            terminal.style.height = '100%';
+            terminal.style.background = '#001100';
+            terminal.style.color = '#33ff33';
+            terminal.style.fontFamily = 'VT323, monospace';
+            terminal.style.padding = '20px';
+            terminal.style.zIndex = '9999';
+            terminal.style.overflow = 'hidden';
+            document.body.appendChild(terminal);
+
+            const messages = [
+                'RETROTECH DIAGNOSTICS SYSTEM v2.1',
+                'INITIALIZING SYSTEM...',
+                'CHECKING MEMORY............OK',
+                'LOADING DRIVERS............OK',
+                'INITIALIZING DISPLAY.......OK',
+                'CHECKING CONNECTIONS.......OK',
+                'LOADING USER INTERFACE.....',
+                'SYSTEM READY.'
+            ];
+
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < messages.length) {
+                    terminal.innerHTML += messages[i] + '<br>';
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        terminal.style.display = 'none';
+                    }, 1000);
+                }
+            }, 500);
+        });
     </script>
 </body>
 </html> 
